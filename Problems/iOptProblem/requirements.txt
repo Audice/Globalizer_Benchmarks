@@ -56,3 +56,4 @@ tqdm==4.67.1
 seaborn==0.13.2
 opencv-python==4.13.0.92
 albumentationsx==2.3.1
+timm==1.0.28
