@@ -25,7 +25,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from EEG.scripts.ThirdPartTools import *
 
-DATA_DIR = '../dataset'
+DATA_DIR = 'EEG/learn_dataset'
 def Prepare(dataset_dir = '../dataset', batch_size = 32, num_workers = 0):
     train_dataset = EEGClassificationDataset(
         data_dir=DATA_DIR,
@@ -115,8 +115,8 @@ class EEGProblem(Problem):
         self.upper_bound_of_float_variables = [0.85, 128, 3e-2, 1024]
 
 
-        self.discrete_variable_names = np.array(['num_rules', 'backbone_name'], dtype=str)
-        self.discrete_variable_values([8, 12, 16, 20, 24, 32], ['simple', 'inception', 'resnet18', 'densenet'])
+        self.discrete_variable_names = ['num_rules', 'backbone_name']
+        self.discrete_variable_values = [['8', '12', '16', '20', '24', '32'], ['simple', 'inception', 'resnet18', 'densenet']]
 
 
         GPU_count = torch.cuda.device_count()
@@ -139,9 +139,9 @@ class EEGProblem(Problem):
 
     def calculate(self, point: Point, function_value: FunctionValue) -> FunctionValue:
 
-        focal_alpha, cnn_embedding_dim, lr_fuzzy, backbone_feature_dim_options = point.float_variables[0], point.float_variables[1], point.float_variables[2], point.float_variables[3]
+        focal_alpha, cnn_embedding_dim, lr_fuzzy, backbone_feature_dim_options = point.float_variables[0], int(point.float_variables[1]), point.float_variables[2], int(point.float_variables[3])
 
-        num_rules, backbone_name = point.discrete_variables[0], point.discrete_variables[1]
+        num_rules, backbone_name = int(point.discrete_variables[0]), point.discrete_variables[1]
         config = FuzzyCNNConfig(
             backbone_name=backbone_name,
             input_channels=23,
@@ -185,8 +185,7 @@ class EEGProblem(Problem):
             optimizer,
             mode='min',
             factor=0.5,
-            patience=5,
-            verbose=True
+            patience=5
         )
 
         trainer.fit(

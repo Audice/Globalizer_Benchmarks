@@ -14,8 +14,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from torchvision import models
-from datetime import datetime, date, time, timedelta
-from Metrics import ImbalancedMetrics
+from datetime import datetime, date, timedelta
+import time
+from EEG.scripts.Metrics import *
 import torch.optim as optim
 from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score, classification_report
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingWarmRestarts
@@ -212,12 +213,11 @@ class FuzzyCNNTrainer:
         self.best_val_mcc = 0.0
         self.best_epoch = 0
 
-        print(f"✅ Trainer initialized")
+        print(f"Trainer initialized")
         print(f"   Device: {self.device}")
         print(f"   Loss: {loss_type}")
         print(f"   Experiment: {self.experiment_name}")
         print(f"   Save dir: {self.exp_dir}")
-        print("=" * 60)
 
     def train_epoch(self, optimizer):
         """
@@ -268,7 +268,7 @@ class FuzzyCNNTrainer:
         all_preds = np.array(all_preds)
         all_labels = np.array(all_labels)
 
-        metrics = self.metrics.calculate(all_preds, all_labels)
+        metrics = self.metrics.calculate_metrics(all_preds, all_labels)
 
         return total_loss / len(self.train_loader), metrics
 
@@ -393,12 +393,10 @@ class FuzzyCNNTrainer:
                 verbose=verbose
             )
 
-        print("\n" + "=" * 60)
-        print(f"🚀 STARTING TRAINING")
+        print(f"STARTING TRAINING")
         print(f"   Epochs: {epochs}")
         print(f"   Loss: {self.loss_type}")
         print(f"   Device: {self.device}")
-        print("=" * 60 + "\n")
 
         best_val_f1 = 0.0
         patience_counter = 0
@@ -461,13 +459,13 @@ class FuzzyCNNTrainer:
 
             # Early stopping
             if patience_counter >= early_stopping_patience:
-                print(f"\n⏹️ Early stopping triggered after {epoch} epochs")
+                print(f"\nEarly stopping triggered after {epoch} epochs")
                 break
 
         # Завершаем обучение
         total_time = time.time() - start_time
         print("\n" + "=" * 60)
-        print(f"✅ TRAINING COMPLETED")
+        print(f"TRAINING COMPLETED")
         print(f"   Best F1: {self.best_val_f1:.4f} (epoch {self.best_epoch})")
         print(f"   Best MCC: {self.best_val_mcc:.4f}")
         print(f"   Total time: {total_time / 60:.1f} minutes")
@@ -519,13 +517,13 @@ class FuzzyCNNTrainer:
         path = self.exp_dir / checkpoint_name
 
         if not path.exists():
-            print(f"⚠️ Checkpoint not found: {path}")
+            print(f"Checkpoint not found: {path}")
             return
 
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.best_val_f1 = checkpoint.get('best_val_f1', 0.0)
-        print(f"✅ Checkpoint loaded: {path}")
+        print(f"   Checkpoint loaded: {path}")
         print(f"   Epoch: {checkpoint['epoch']}")
         print(f"   F1: {checkpoint['metrics']['f1']:.4f}")
 
@@ -586,9 +584,8 @@ class FuzzyCNNTrainer:
         with open(self.exp_dir / 'test_results.json', 'w') as f:
             json.dump(metrics, f, indent=2)
 
-        print("\n" + "=" * 60)
-        print("📊 TEST RESULTS")
-        print("=" * 60)
+        print("\n")
+        print("TEST RESULTS")
         print(f"Accuracy:           {metrics['accuracy']:.4f}")
         print(f"Precision:          {metrics['precision']:.4f}")
         print(f"Recall (Sensitivity): {metrics['recall']:.4f}")
@@ -597,10 +594,8 @@ class FuzzyCNNTrainer:
         print(f"Balanced Accuracy:  {metrics['balanced_accuracy']:.4f}")
         print(f"MCC:                {metrics['mcc']:.4f}")
         print(f"AUC:                {metrics.get('auc', 0):.4f}")
-        print("=" * 60)
         print(f"TP: {metrics['tp']}, TN: {metrics['tn']}")
         print(f"FP: {metrics['fp']}, FN: {metrics['fn']}")
-        print("=" * 60)
 
         return results
 
@@ -628,9 +623,6 @@ class FuzzyCNNTrainer:
     def print_summary(self):
         """Печатает сводку"""
         summary = self.get_summary()
-        print("\n" + "=" * 60)
-        print("📊 TRAINING SUMMARY")
-        print("=" * 60)
         for key, value in summary.items():
             print(f"   {key}: {value}")
         print("=" * 60)

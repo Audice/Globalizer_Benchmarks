@@ -4,7 +4,7 @@ import timm
 from typing import Tuple, List, Dict, Any, Optional
 from dataclasses import dataclass, field
 import warnings
-from scripts import ModelArchitectures as ma
+from EEG.scripts.ModelArchitectures import *
 
 
 class FuzzyTSKLayer(nn.Module):
@@ -122,7 +122,7 @@ class CNNWithFuzzy(nn.Module):
         # Извлекаем параметры для DenseNet из extra_params
         extra_params = config.extra_params.copy() if config.extra_params else {}
 
-        self.backbone = ma.ModelFactory.create_model(
+        self.backbone = ModelFactory.create_model(
             model_name=config.backbone_name,
             input_channels=config.input_channels,
             input_width=config.input_width,
