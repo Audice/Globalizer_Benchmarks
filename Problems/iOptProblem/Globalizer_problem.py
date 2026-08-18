@@ -22,6 +22,7 @@ from ECG.ECGClassificationProblem import ECGClassificationProblem
 from MachineLearning.SupportVectorMachines.SVC_3D_Transformator import SVC_3D
 from ECG.ECGSegmentationProblem import ECGSegmentationProblem
 #from AirObjectDetectionProblem import AirObjectDetectionProblem
+from ECG.PacemakerClassificationProblem import *
 from EEG.EEGProblem import *
 
 
@@ -143,7 +144,9 @@ def get_problem_parameters_names(class_name: str)->List[str]:
     if class_name == 'TestsProblem':
         return ["DataSet", "Method"]
     if class_name == 'AirObjectDetectionProblem':
-        return ["DataSet", "Method"]
+        return ["Dimension", "ProcRank"]
+    if class_name == 'PacemakerClassificationProblem':
+        return ["Dimension", "ProcRank"]
     return []
 
 
@@ -255,6 +258,14 @@ def test_eegproblem():
     result = problem.calculate([0.75, 64, 1e-2, 512],['16', 'simple'])
     print(result)
 
+def test_pacemaker_problem():
+    pacemakerProblem = PacemakerClassificationProblem()
+
+    problem = GlobalizerProblem(pacemakerProblem)
+
+    result = problem.calculate([2, 16, 0.2, 0.0001, 0.00005, 0.5, 1.0, 3], [])
+    print(result)
+
 #def test_air_object_detected_problem():
 #    problem_class = AirObjectDetectionProblem(2)
 #    problem = GlobalizerProblem(problem_class)
@@ -264,7 +275,8 @@ def test_eegproblem():
 #    print(result)
 
 if __name__ == "__main__":
-    test_eegproblem()
+    test_pacemaker_problem()
+    #test_eegproblem()
     #test_air_object_detected_problem()
     #test_ecg_segmentation_problem_main()    
     #TestSVC3D()
