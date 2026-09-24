@@ -151,6 +151,8 @@ public:
   */
   int GetDiscreteVariableValues(std::vector< std::vector<std::string>>& values) const;
 
+  virtual void Finalize(const std::vector<double>& y, std::vector<std::string>& u);
+
   ~iOptProblem();
 };
 

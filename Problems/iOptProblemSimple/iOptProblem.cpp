@@ -151,6 +151,11 @@ inline int iOptProblem::GetDiscreteVariableValues(std::vector< std::vector<std::
     return IGlobalOptimizationProblem::PROBLEM_OK;
 }
 
+void iOptProblem::Finalize(const std::vector<double>& y, std::vector<std::string>& u)
+{
+    return mFunction->Finalize(y, u);
+}
+
 
 // ------------------------------------------------------------------------------------------------
 inline int iOptProblem::SetParameter(std::string name, std::string value)

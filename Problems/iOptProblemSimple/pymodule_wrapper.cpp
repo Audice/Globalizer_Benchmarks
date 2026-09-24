@@ -446,6 +446,40 @@ double TPythonModuleWrapper::EvaluateFunction(const std::vector<double>& y, cons
   return retval;
 }
 
+void TPythonModuleWrapper::Finalize(const std::vector<double>& y, std::vector<std::string>& categorys)
+{
+    double retval = 0;
+    int dim = mDimension - discreteParams.size();
+
+#pragma omp critical
+    {
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
+
+        PyObject* py_arg1 = PyList_New(dim);
+        for (int i = 0; i != dim; i++)
+            PyList_SET_ITEM(py_arg1, i, PyFloat_FromDouble(y[i]));
+
+
+        //auto py_arg1 = makeFloatList(y.data(), dim);
+        auto py_arg2 = makeStrList(categorys);
+ 
+
+        auto arglist = PyTuple_Pack(2, py_arg1, py_arg2);
+
+        PyObject_CallMethod(pInstance, "finalize", "O", arglist);
+        PyErr_Print();
+
+        Py_DECREF(py_arg1);
+        Py_DECREF(py_arg2);
+        Py_DECREF(arglist);
+
+
+        PyGILState_Release(gstate);
+    }
+
+}
+
 
 // ------------------------------------------------------------------------------------------------
 std::vector<double> TPythonModuleWrapper::EvaluateAllFunction(const std::vector<double>& y, const std::vector<std::string>& categorys) const

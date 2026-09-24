@@ -33,6 +33,7 @@
 #include <string>
 #include <stdexcept>
 #include <variant>
+#include <iostream>
 
 /// Варианты типов параметров задачи
 using IOptVariantType = std::variant<int, double, std::string>;
@@ -214,7 +215,7 @@ public:
   */
   virtual void GetParameters(std::vector<std::string>& names, std::vector<std::string>& values);
 
-
+  virtual void Finalize(const std::vector<double>& y, std::vector<std::string>& u);
 
   ///Деструктор
   virtual ~IGlobalOptimizationProblem();
@@ -312,6 +313,11 @@ inline int IGlobalOptimizationProblem::SetParameter(std::string name, void* valu
 inline void IGlobalOptimizationProblem::GetParameters(std::vector<std::string>& names, std::vector<std::string>& values)
 {
    
+}
+
+inline void IGlobalOptimizationProblem::Finalize(const std::vector<double>& y, std::vector<std::string>& u)
+{
+    std::cout << "Finalize not implemented!" << std::endl;
 }
 
 // ------------------------------------------------------------------------------------------------
