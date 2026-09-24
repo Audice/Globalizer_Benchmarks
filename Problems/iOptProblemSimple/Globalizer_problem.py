@@ -93,6 +93,9 @@ class GlobalizerProblem:
     #     self.function_value: FunctionValue = FunctionValue()
     #     #self.result = self.problem.calculate(self.point, self.function_value)
     #     #self.result_value = float(self.result.value)
+    
+    def finalize(self, coordinate: List[float], discreteCoordinate: List[str]):
+        print("Finalize!!!")
 
 def get_problem_parameters_names(class_name: str)->List[str]:
     if class_name == 'Rastrigin':

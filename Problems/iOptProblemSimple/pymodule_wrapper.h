@@ -85,6 +85,10 @@ public:
   \return Значение функции с указанным номером
   */
   double EvaluateFunction(const std::vector<double>& y, const std::vector<std::string>& categorys, int fNumber) const;
+
+
+  virtual void Finalize(const std::vector<double>& y, std::vector<std::string>& categorys);
+
   /** Метод, вычисляющий все функции задачи
 
   \param[in] y непрерывные координаты точки, в которой необходимо вычислить значение
