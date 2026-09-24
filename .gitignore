@@ -101,5 +101,6 @@ Problems/iOptProblem/xception/
 Problems/iOptProblem/checkpoints/
 Problems/iOptProblem/EEG/.idea/
 Problems/iOptProblem/ECG/.idea/
+.idea/
 
 **/__pycache__/
