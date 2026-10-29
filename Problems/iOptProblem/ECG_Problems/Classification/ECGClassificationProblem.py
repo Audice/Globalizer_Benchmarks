@@ -242,7 +242,7 @@ class ECGClassificationProblem(Problem):
                 all_labels.extend(y_batch.cpu().numpy())
 
         finish_metric = f1_score(all_labels, all_preds, average='macro')
-        print("Значение целевой метрики на валидационной выборке: ", metric)
+        print("Значение целевой метрики на валидационной выборке: ", abs(metric))
         print("Значение целевой метрики на тестовой выборке: ", finish_metric)
 
         return finish_metric

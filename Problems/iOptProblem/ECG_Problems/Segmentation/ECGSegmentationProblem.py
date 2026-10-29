@@ -888,7 +888,7 @@ class ECGSegmentationProblem(Problem):
             test_metrics = evaluate(model, self.test_loader, criterion, self.device)
 
         finish_metric = test_metrics['macro_f1']
-        print("Значение целевой метрики на валидационной выборке: ", metric)
+        print("Значение целевой метрики на валидационной выборке: ", abs(metric))
         print("Значение целевой метрики на тестовой выборке: ", finish_metric)
 
         return finish_metric

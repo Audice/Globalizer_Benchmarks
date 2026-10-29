@@ -501,7 +501,7 @@ class AirObjectDetectionProblem(Problem):
           avg_val_dice = val_dice / valid_batches
 
       f1_score = 2 * avg_val_iou * avg_val_dice / (avg_val_iou + avg_val_dice + 1e-6)
-      print("Значение целевой метрики на валидационной выборке: ", metric)
+      print("Значение целевой метрики на валидационной выборке: ", abs(metric))
       print("Значение целевой метрики на тестовой выборке: ", f1_score)
 
       return f1_score
