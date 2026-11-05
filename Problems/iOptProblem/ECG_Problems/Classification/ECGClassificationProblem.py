@@ -213,7 +213,7 @@ class ECGClassificationProblem(Problem):
             with open(json_file, "r", encoding="utf-8") as f:
                 current_params_dict = json.load(f)
                 if self.match_by_fields(current_params_dict, tmp_params_dict,
-                                        ['num_blocks', 'growth_rate', 'kernel_size', 'dropout']):
+                                        ['p', 'f']):
                     model_params = current_params_dict
                     metric = float(json_file.stem)
                     break
@@ -242,7 +242,7 @@ class ECGClassificationProblem(Problem):
                 all_labels.extend(y_batch.cpu().numpy())
 
         finish_metric = f1_score(all_labels, all_preds, average='macro')
-        print("Значение целевой метрики на валидационной выборке: ", metric)
+        print("Значение целевой метрики на валидационной выборке: ", abs(metric))
         print("Значение целевой метрики на тестовой выборке: ", finish_metric)
 
         return finish_metric

@@ -842,7 +842,7 @@ class ECGSegmentationProblem(Problem):
             with open(json_file, "r", encoding="utf-8") as f:
                 current_params_dict = json.load(f)
                 if self.match_by_fields(current_params_dict, tmp_params_dict,
-                                        ['num_blocks', 'growth_rate', 'kernel_size', 'dropout']):
+                                        ['p', 'd']):
                     model_params = current_params_dict
                     metric = float(json_file.stem)
                     break
@@ -888,7 +888,7 @@ class ECGSegmentationProblem(Problem):
             test_metrics = evaluate(model, self.test_loader, criterion, self.device)
 
         finish_metric = test_metrics['macro_f1']
-        print("Значение целевой метрики на валидационной выборке: ", metric)
+        print("Значение целевой метрики на валидационной выборке: ", abs(metric))
         print("Значение целевой метрики на тестовой выборке: ", finish_metric)
 
         return finish_metric
