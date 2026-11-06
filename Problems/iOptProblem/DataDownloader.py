@@ -76,7 +76,7 @@ def parse_args(default_args = None):
 
 task_links = {
     "ECGClassification" : ["https://disk.yandex.ru/d/2G-w_EXbKFb7QA", "ECG_Problems/Classification/dataset"],
-    "ECGSegmentation" : ["https://disk.yandex.ru/d/_-5_exJ9XUWAeA", "ECG_Problems/Segmentation/dataset"],
+    "ECGSegmentation" : ["https://disk.yandex.ru/d/M9xdGssonkuKgw", "ECG_Problems/Segmentation/dataset"],
     "FromAirObjectDetection": ["https://disk.yandex.ru/d/YLWsT_gKcT063w", "ObjectDetection/FromAirObjectDetection/dataset"],
     "ECGPacemakerClassification": ["https://disk.yandex.ru/d/UWHfil_TGYiO_w", "ECG_Problems/Pacemaker/dataset"],
     "EEGClassification": ["https://disk.yandex.ru/d/4tepqtF_RnC2Ig", "EEG_Problems/EEGClassification/dataset"]
