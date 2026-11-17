@@ -99,10 +99,11 @@ Problems/iOptProblem/best.pt
 Problems/iOptProblem/dataset/
 Problems/iOptProblem/xception/
 Problems/iOptProblem/checkpoints/
-Problems/iOptProblem/EEG/.idea/
-Problems/iOptProblem/ECG/.idea/
+Problems/iOptProblem/checkpoints/
+Problems/iOptProblem/MachineLearning/SupportVectorMachines/transformator_state.csv
 .idea/
 **/dataset/
+**/datasets/
 **/checkpoints/
 **/.idea/
 **/models/
