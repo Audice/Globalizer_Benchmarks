@@ -2,9 +2,6 @@ import warnings
 warnings.filterwarnings('ignore', category=UserWarning)
 
 import numpy as np
-from trial import Point
-from trial import FunctionValue
-from problem import Problem
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
 from typing import Dict, List
@@ -16,12 +13,19 @@ from urllib.parse import urlencode
 import requests
 import zipfile
 import os
+import sys
+
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from trial import Point
+from trial import FunctionValue
+from problem import Problem
+from Globalizer_problem import GlobalizerProblem
 
 def factory_dataset():
     path = Path(__file__).parent    
     x = []
     y = []
-    with open(path / 'datasets' / 'transformator_state.csv') as rrrr_file:
+    with open(path / 'transformator_state.csv') as rrrr_file:
         file_reader = csv.reader(rrrr_file, delimiter=",")
         for row in file_reader:
             x_row = []
@@ -36,20 +40,16 @@ def downloadTransformatorsDataset():
     path = Path(__file__).parent
 
     base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
-    public_key = 'https://disk.yandex.ru/d/X_YlA0dJ-OsI8g'
+    public_key = 'https://disk.yandex.ru/d/sQKxgc9GNfM1nw'
 
     final_url = base_url + urlencode(dict(public_key=public_key))
     response = requests.get(final_url)
     download_url = response.json()['href']
 
     download_response = requests.get(download_url)
-    with open(path / 'datasets.zip', 'wb') as f:
+    with open(path / 'transformator_state.csv', 'wb') as f:
         f.write(download_response.content)
 
-    with zipfile.ZipFile(path / 'datasets.zip') as f:
-        f.extractall(path=path)
-
-    os.remove(path / 'datasets.zip')
 
 class SVC_3D(Problem):
     def __init__(self):
@@ -79,8 +79,6 @@ class SVC_3D(Problem):
         kernel_type = point.discrete_variables[0]
         clf = SVC(C=10 ** cs, gamma=10 ** gammas, kernel=kernel_type)
         function_value.value = 1-cross_val_score(clf, self.x, self.y, cv=self.cv, scoring='f1_macro').mean()
-        #print("Arguments: C=\t", 10 ** cs, "\tgamma=\t", 10 ** gammas, "\tkernel=\t",
-        #      kernel_type, "\tValue:\t", function_value.value)
         return function_value
 
     def default_calculate(self)-> float:
@@ -94,3 +92,12 @@ class SVC_3D(Problem):
         
 if __name__ == '__main__':
     downloadTransformatorsDataset()
+    problem_transformator = SVC_3D()
+    problem = GlobalizerProblem(problem_transformator)
+    des = problem.get_discrete_params()
+    sp = problem.get_start_value()
+
+    result = problem.calculate([6.0, -2.0], ['rbf'])
+    print("transformator SVC 3D in (6.0, -2.0, rbf) = " + str(result))
+    default_result = problem_transformator.default_calculate()
+    print("transformator SVC 3D default value = " + str(default_result))

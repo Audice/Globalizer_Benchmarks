@@ -13,7 +13,7 @@ from pathlib import Path
 from dataclasses import dataclass
 
 from typing import List
-
+from pathlib import Path
 
 @dataclass
 class Dataset:
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     path = Path(__file__).parent
 
     base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
-    public_key = 'https://disk.yandex.ru/d/1RHWkpKcmMWWcg'
+    public_key = 'https://disk.yandex.ru/d/P5Lo0E9MJ7YF_Q'
 
     final_url = base_url + urlencode(dict(public_key=public_key))
     response = requests.get(final_url)
@@ -258,7 +258,10 @@ if __name__ == '__main__':
     with open(path / 'datasets.zip', 'wb') as f:
         f.write(download_response.content)
 
+    Path(path /'datasets').mkdir(parents=True, exist_ok=True)
+
+
     with zipfile.ZipFile(path / 'datasets.zip') as f:
-        f.extractall(path=path)
+        f.extractall(path=(path /'datasets'))
 
     os.remove(path / 'datasets.zip')

@@ -1,9 +1,14 @@
 import numpy as np
+import math
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from trial import Point
 from trial import FunctionValue
 from trial import Trial
 from problem import Problem
-import math
+from Globalizer_problem import GlobalizerProblem
 
 
 class Rastrigin(Problem):
@@ -66,3 +71,15 @@ class Rastrigin(Problem):
 
     def get_name(self):
         return self.name
+
+
+if __name__ == '__main__':
+    r_problem = Rastrigin(3)
+    problem = GlobalizerProblem(r_problem)
+    bound = problem.get_lower_bounds()
+    print(bound)
+    result = problem.calculate([0.5] * problem.get_dimension(), [],0)
+    sp = problem.get_start_value()
+    print(result)
+    resultAllFunction = problem.calculate_all_functionals([0.5] * problem.get_dimension(), [])
+    print(resultAllFunction)
