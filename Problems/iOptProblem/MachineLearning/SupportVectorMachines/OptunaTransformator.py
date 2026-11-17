@@ -1,7 +1,4 @@
 import numpy as np
-from trial import Point
-from trial import FunctionValue
-from problem import Problem
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
 from typing import Dict, List
@@ -15,22 +12,29 @@ import zipfile
 import os
 import optuna
 import warnings
+import sys
+
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from trial import Point
+from trial import FunctionValue
+from problem import Problem
+from Globalizer_problem import GlobalizerProblem
 
 warnings.filterwarnings('ignore')
 
 
 def factory_dataset():
-    path = Path(__file__).parent
+    path = Path(__file__).parent    
     x = []
     y = []
-    with open(path / 'datasets' / 'transformator_state.csv') as rrrr_file:
+    with open(path / 'transformator_state.csv') as rrrr_file:
         file_reader = csv.reader(rrrr_file, delimiter=",")
         for row in file_reader:
             x_row = []
-            for i in range(len(row) - 1):
+            for i in range(len(row)-1):
                 x_row.append(row[i])
             x.append(x_row)
-            y.append(row[len(row) - 1])
+            y.append(row[len(row)-1])
     return shuffle(np.array(x), np.array(y), random_state=42)
 
 
@@ -38,20 +42,15 @@ def downloadTransformatorsDataset():
     path = Path(__file__).parent
 
     base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
-    public_key = 'https://disk.yandex.ru/d/X_YlA0dJ-OsI8g'
+    public_key = 'https://disk.yandex.ru/d/sQKxgc9GNfM1nw'
 
     final_url = base_url + urlencode(dict(public_key=public_key))
     response = requests.get(final_url)
     download_url = response.json()['href']
 
     download_response = requests.get(download_url)
-    with open(path / 'datasets.zip', 'wb') as f:
+    with open(path / 'transformator_state.csv', 'wb') as f:
         f.write(download_response.content)
-
-    with zipfile.ZipFile(path / 'datasets.zip') as f:
-        f.extractall(path=path)
-
-    os.remove(path / 'datasets.zip')
 
 
 class SVC_3D_Optuna(Problem):
@@ -292,6 +291,16 @@ if __name__ == '__main__':
 
     # Выполняем оптимизацию
     svm_optimizer.optimize_with_optuna(show_plots=True)
+    
+    best_params_transformed = {
+        'C': 10 ** svm_optimizer.best_params['C_log'],
+        'gamma': 10 ** svm_optimizer.best_params['gamma_log'],
+        'kernel': svm_optimizer.best_params['kernel']
+    }
+    
+    print("\nЛучшие параметры: ", best_params_transformed)
+    
+    print("Лучшее значение: ", svm_optimizer.best_value)
 
     # Сравниваем с моделью по умолчанию
     #svm_optimizer.compare_with_default()
