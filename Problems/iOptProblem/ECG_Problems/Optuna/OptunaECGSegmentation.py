@@ -928,7 +928,7 @@ if __name__ == '__main__':
 
     # Создаем оптимизатор
     svm_optimizer = OptunaECGSegmentation(
-        n_trials=10,  # Количество испытаний
+        n_trials=16,  # Количество испытаний
         timeout=10*3600  # Максимальное время в секундах (1 час)
     )
 
