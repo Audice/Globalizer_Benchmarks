@@ -1,56 +1,17 @@
-import numpy as np
-from trial import Point
-from trial import FunctionValue
-from problem import Problem
-from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score
-from typing import Dict, List
+
 from sklearn.utils import shuffle
 import csv
-from sklearn.model_selection import StratifiedKFold
-from pathlib import Path
 from urllib.parse import urlencode
 import requests
 import zipfile
 import os
 import optuna
 import warnings
-import warnings
 warnings.filterwarnings('ignore', category=UserWarning)
 
-from ClassificationScripts.dataset import ECGDataset
-from ClassificationScripts.model import MobileNetV3Small1D
-from trial import Point
-from trial import FunctionValue
-from problem import Problem
-from typing import Dict
-from sklearn.model_selection import train_test_split
-import numpy as np
-import wfdb
-from torch.utils.data import Dataset, DataLoader
-import torch
-import torch.nn as nn
-import os
-from pathlib import Path
-from ClassificationScripts.dataset import ECGDataset
-from ClassificationScripts.model import MobileNetV3Small1D
-from trial import Point
-from trial import FunctionValue
-from problem import Problem
-from typing import Dict
-from sklearn.model_selection import train_test_split
-import numpy as np
-import wfdb
-from torch.utils.data import Dataset, DataLoader
-import torch
-import torch.nn as nn
-import os
-import argparse
 import random
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -59,6 +20,38 @@ from torch.utils.data import DataLoader, Dataset
 
 from pathlib import Path
 from datetime import datetime
+import sys
+
+
+
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from trial import Point
+from trial import FunctionValue
+from problem import Problem
+from Globalizer_problem import GlobalizerProblem
+
+
+
+def downloadSegmentationDataset():
+    path = Path(__file__).parent
+
+    base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
+    public_key = 'https://disk.yandex.ru/d/RMdAQFReZXexBg'
+
+    final_url = base_url + urlencode(dict(public_key=public_key))
+    response = requests.get(final_url)
+    download_url = response.json()['href']
+
+    download_response = requests.get(download_url)
+    with open(path / 'datasets.zip', 'wb') as f:
+        f.write(download_response.content)
+
+    Path(path / 'datasets').mkdir(parents=True, exist_ok=True)
+
+    with zipfile.ZipFile(path / 'datasets.zip') as f:
+        f.extractall(path=(path / 'datasets' / 'ECGSegmentation'))
+
+    os.remove(path / 'datasets.zip')
 
 
 def save_trial_callback(study, trial):
@@ -704,7 +697,7 @@ class OptunaECGSegmentation(Problem):
         set_seed(int(42))
 
         current_dir = Path.cwd()
-        self.data_dir = Path("ECGSegmentation/")
+        self.data_dir = Path("datasets/ECGSegmentation/")
         self.signal_suffix = str("_signal.npy")
         self.labels_suffix = str("_labels.npy")
 
@@ -802,7 +795,7 @@ class OptunaECGSegmentation(Problem):
         val_loader = DataLoader(self.val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers,
                                 pin_memory=(str(self.device).startswith("cuda")))
 
-        epochs = 40
+        epochs = 3
         save_best_path = "best.pt"
         if save_best_path is not None:
             save_best_path = str(save_best_path)
@@ -821,7 +814,6 @@ class OptunaECGSegmentation(Problem):
                 "val_accuracy": va["accuracy"],
                 "val_macro_f1": va["macro_f1"],
             }
-            #print(" | ".join([f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" for k, v in logs.items()]))
 
             score = float(logs["val_macro_f1"])
             if score > best:
@@ -829,7 +821,6 @@ class OptunaECGSegmentation(Problem):
                 if save_best_path:
                     Path(save_best_path).parent.mkdir(parents=True, exist_ok=True)
                     torch.save(model.state_dict(), save_best_path)
-                    #print(f"  -> saved best to {save_best_path} (val_macro_f1={best:.4f})")
 
 
         return -best
@@ -874,6 +865,8 @@ class OptunaECGSegmentation(Problem):
 
 if __name__ == '__main__':
 
+    downloadSegmentationDataset()
+
     with open("segmentation_trials_log.txt", "a", encoding="utf-8") as f:
         current_datetime = datetime.now()
 
@@ -884,7 +877,7 @@ if __name__ == '__main__':
 
     # Создаем оптимизатор
     svm_optimizer = OptunaECGSegmentation(
-        n_trials=320,  # Количество испытаний
+        n_trials=10,  # Количество испытаний
         timeout=10*3600  # Максимальное время в секундах (1 час)
     )
 
