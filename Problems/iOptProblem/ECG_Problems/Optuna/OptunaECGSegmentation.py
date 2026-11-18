@@ -30,6 +30,40 @@ from trial import FunctionValue
 from problem import Problem
 from Globalizer_problem import GlobalizerProblem
 
+def train_val_test_split(
+    samples: Sequence,
+    *,
+    val_frac: float,
+    test_frac: float,
+    seed: int,
+    shuffle: bool = True,
+) -> Tuple[List, List, List]:
+    if not (0.0 <= val_frac <= 1.0):
+        raise ValueError(f"val_frac must be in [0,1], got {val_frac}")
+    if not (0.0 <= test_frac <= 1.0):
+        raise ValueError(f"test_frac must be in [0,1], got {test_frac}")
+    if val_frac + test_frac > 1.0:
+        raise ValueError(
+            f"val_frac + test_frac must be <= 1, got {val_frac + test_frac}"
+        )
+
+    idx = np.arange(len(samples))
+    rng = np.random.default_rng(seed)
+    if shuffle:
+        rng.shuffle(idx)
+
+    n = len(samples)
+    n_val = int(n * val_frac)
+    n_test = int(n * test_frac)
+
+    val_idx = idx[:n_val]
+    test_idx = idx[n_val:n_val + n_test]
+    train_idx = idx[n_val + n_test:]
+
+    train = [samples[i] for i in train_idx.tolist()]
+    val = [samples[i] for i in val_idx.tolist()]
+    test = [samples[i] for i in test_idx.tolist()]
+    return train, val, test
 
 
 def downloadSegmentationDataset():
@@ -61,7 +95,7 @@ def save_trial_callback(study, trial):
         best_trial = study.best_trial
         best_value = best_trial.value
         best_params = best_trial.params
-        
+
         # Записываем информацию о текущем испытании и лучшем результате
         f.write("=" * 60 + "\n")
         f.write(f"Trial {trial.number}:\n")
@@ -682,8 +716,6 @@ def evaluate(model: nn.Module, loader: DataLoader, criterion: nn.Module, device:
 
 
 
-
-
 class OptunaECGSegmentation(Problem):
     def __init__(self, n_trials: int = 100, timeout: int = None):
         super().__init__()
@@ -703,9 +735,10 @@ class OptunaECGSegmentation(Problem):
 
         self.samples = collect_samples(self.data_dir, signal_suffix=self.signal_suffix,
                                        labels_suffix=self.labels_suffix)
-        train_s, val_s = train_val_split(
+        train_s, val_s, test_s = train_val_test_split(
             self.samples,
-            val_frac=0.2,
+            val_frac=0.15,
+            test_frac=0.15,
             seed=42,
             shuffle=True,
         )
@@ -714,11 +747,12 @@ class OptunaECGSegmentation(Problem):
         self.label_channel_idx = 0
         self.normalize = True
 
-        self.train_ds = NpySegmentationDataset(train_s, normalize=self.normalize,
-                                               label_channel_idx=self.label_channel_idx,
-                                               signal_layout=self.signal_layout)
+        self.train_ds = NpySegmentationDataset(train_s, normalize=self.normalize, label_channel_idx=self.label_channel_idx,
+                                          signal_layout=self.signal_layout)
         self.val_ds = NpySegmentationDataset(val_s, normalize=self.normalize, label_channel_idx=self.label_channel_idx,
-                                             signal_layout=self.signal_layout)
+                                        signal_layout=self.signal_layout)
+        self.test_ds = NpySegmentationDataset(test_s, normalize=self.normalize, label_channel_idx=self.label_channel_idx,
+                                        signal_layout=self.signal_layout)
 
         self.x0, self.y0 = self.train_ds[0]
         self.in_channels = int(self.x0.shape[0])
@@ -728,7 +762,29 @@ class OptunaECGSegmentation(Problem):
             self.num_classes = infer_num_classes(self.samples, label_channel_idx=self.label_channel_idx)
         self.num_classes = int(self.num_classes)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        GPU_count = torch.cuda.device_count()
+        print(f"Доступно GPU: {GPU_count}")
+        for i in range(GPU_count):
+            print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+
+        self.gpu_id = 0
+        if GPU_count != 0:
+            self.gpu_id = 0
+
+            self.device = torch.device(f"cuda:{self.gpu_id}")
+
+            torch.device(f"{self.device}")
+
+        else:
+            self.device = "cpu"
+
+        self.batch_size = 128
+        self.train_loader = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=0,
+                                  pin_memory=(str(self.device).startswith("cpu")))
+        self.val_loader = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, num_workers=0,
+                                pin_memory=(str(self.device).startswith("cpu")))
+        self.test_loader = DataLoader(self.test_ds, batch_size=self.batch_size, shuffle=False, num_workers=0,
+                                pin_memory=(str(self.device).startswith("cpu")))
 
         self.float_variable_names = np.array(["P parameter", "Depth"], dtype=str)
         self.lower_bound_of_float_variables = [0.0, 2.0]
@@ -787,13 +843,8 @@ class OptunaECGSegmentation(Problem):
                                 weight_decay=0.0,
                                 )
 
-        batch_size = 32
-        num_workers = 0
 
-        train_loader = DataLoader(self.train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers,
-                                  pin_memory=(str(self.device).startswith("cuda")))
-        val_loader = DataLoader(self.val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers,
-                                pin_memory=(str(self.device).startswith("cuda")))
+        num_workers = 0
 
         epochs = 3
         save_best_path = "best.pt"
@@ -802,8 +853,8 @@ class OptunaECGSegmentation(Problem):
 
         best = -1e18
         for epoch in range(1, epochs + 1):
-            tr = train_one_epoch(model, train_loader, optim, criterion, self.device)
-            va = evaluate(model, val_loader, criterion, self.device)
+            tr = train_one_epoch(model, self.train_loader, optim, criterion, self.device)
+            va = evaluate(model, self.val_loader, criterion, self.device)
 
             logs = {
                 "epoch": epoch,
