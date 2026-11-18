@@ -111,3 +111,5 @@ Problems/iOptProblem/MachineLearning/SupportVectorMachines/transformator_state.c
 **/__pycache__/
 **/uci-datasets/
 **/datasets/
+**/best.pt
+**/segmentation_trials_log.txt
