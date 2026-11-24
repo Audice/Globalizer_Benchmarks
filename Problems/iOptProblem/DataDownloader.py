@@ -58,7 +58,7 @@ def parse_args(default_args = None):
         required=True,
         dest='task_class',  # Используем dest чтобы избежать конфликта с keyword 'class'
         default='ECGClassification',
-        help='Выберите класс задачи: ECGClassification, ECGSegmentation, ECGPacemakerClassification, FromAirObjectDetection...'
+        help='Выберите класс задачи: ECGClassification, ECGClassificationLarge, ECGSegmentation, ECGPacemakerClassification, FromAirObjectDetection...'
     )
 
     # Дополнительные опциональные аргументы
@@ -76,6 +76,7 @@ def parse_args(default_args = None):
 
 task_links = {
     "ECGClassification" : ["https://disk.yandex.ru/d/2G-w_EXbKFb7QA", "ECG_Problems/Classification/dataset"],
+    "ECGClassificationLarge" : ["https://disk.yandex.ru/d/EKrLFM0tLSXBVw", "ECG_Problems/Classification/dataset"],
     "ECGSegmentation" : ["https://disk.yandex.ru/d/RMdAQFReZXexBg", "ECG_Problems/Segmentation/dataset"],
     "FromAirObjectDetection": ["https://disk.yandex.ru/d/YLWsT_gKcT063w", "ObjectDetection/FromAirObjectDetection/dataset"],
     "ECGPacemakerClassification": ["https://disk.yandex.ru/d/UWHfil_TGYiO_w", "ECG_Problems/Pacemaker/dataset"],
