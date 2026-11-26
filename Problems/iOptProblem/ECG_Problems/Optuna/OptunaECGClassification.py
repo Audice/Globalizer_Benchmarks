@@ -50,8 +50,8 @@ def downloadClassificationDataset():
     os.remove(path / 'datasets.zip')
 
 
-def train(model, train_loader, val_loader, epochs=10, lr=1e-3, gpu_id=0, patience=100):
-    if gpu_id != 0:
+def train(model, train_loader, val_loader, epochs=10, lr=1e-3, gpu_id=-1, patience=100):
+    if gpu_id >= 0:
         device = torch.device(f"cuda:{gpu_id}")
     else:
         device = torch.device('cpu')
@@ -148,7 +148,7 @@ def save_trial_callback(study, trial):
 class OptunaECGClassification(Problem):
     def __init__(self, n_trials: int = 100, timeout: int = None):
         super().__init__()
-        self.N_FOLDS = 10
+        self.N_FOLDS = 5
 
         self.base_path = Path("dataset/ECGClassification")
         X, y = prepare_data(self.base_path)
@@ -207,7 +207,7 @@ class OptunaECGClassification(Problem):
         for i in range(GPU_count):
             print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
-        self.gpu_id = 0
+        self.gpu_id = -1
         if GPU_count != 0:
             self.gpu_id = 0
             self.device = torch.device(f"cuda:{self.gpu_id}")
@@ -337,7 +337,7 @@ class OptunaECGClassification(Problem):
                 loss.backward()
                 optimizer.step()
 
-        #torch.save(model.state_dict(), self.model_save_path / f'final_model_{uuid.uuid4().hex[:8]}.pth')
+        torch.save(model.state_dict(), self.model_save_path / f'{finish_metric}_final_model_{uuid.uuid4().hex[:8]}.pth')
         finish_metric = evaluate(model, self.test_loader, self.device)
 
         print(f'mean cross-validated macro-F1 по {self.N_FOLDS} фолдам: ', abs(metric))

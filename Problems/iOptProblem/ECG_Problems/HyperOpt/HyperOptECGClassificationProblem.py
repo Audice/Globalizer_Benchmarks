@@ -46,8 +46,8 @@ def downloadClassificationDataset():
     os.remove(path / 'datasets.zip')
 
 
-def train(model, train_loader, val_loader, epochs=10, lr=1e-3, gpu_id=0, patience=100):
-    if gpu_id != 0:
+def train(model, train_loader, val_loader, epochs=10, lr=1e-3, gpu_id=-1, patience=100):
+    if gpu_id >= 0:
         device = torch.device(f"cuda:{gpu_id}")
     else:
         device = torch.device('cpu')
@@ -111,7 +111,7 @@ def prepare_data(base_path):
 class HyperoptECGClassification(Problem):
     def __init__(self, max_evals: int = 100, timeout: int = None):
         super().__init__()
-        self.N_FOLDS = 10
+        self.N_FOLDS = 5
         self.base_path = Path("dataset/ECGClassification")
         X, y = prepare_data(self.base_path)
 
@@ -159,13 +159,18 @@ class HyperoptECGClassification(Problem):
         print(f"Доступно GPU: {GPU_count}")
         for i in range(GPU_count):
             print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
-        self.gpu_id = 0
+            
+            
+        self.gpu_id = -1
         if GPU_count != 0:
             self.gpu_id = 0
             self.device = torch.device(f"cuda:{self.gpu_id}")
+            torch.device(f"{self.device}")
         else:
             self.device = "cpu"
+
         print(f"gpu_id = {self.gpu_id}")
+        
 
     def _build_model(self, p: float, f: float) -> nn.Module:
         return MobileNetV3Small1D(
@@ -270,6 +275,7 @@ class HyperoptECGClassification(Problem):
                 loss.backward()
                 optimizer.step()
 
+        torch.save(model.state_dict(), self.model_save_path / f'{finish_metric}_final_model_{uuid.uuid4().hex[:8]}.pth')
         finish_metric = evaluate(model, self.test_loader, self.device)
         print(f'mean cross-validated macro-F1 по {self.N_FOLDS} фолдам: ', abs(metric))
         print("Значение целевой метрики на тестовой выборке: ", finish_metric)
@@ -322,7 +328,7 @@ if __name__ == '__main__':
         f.write("=" * 60 + "\n\n")
 
     optimizer = HyperoptECGClassification(
-        max_evals=3,  # Количество испытаний (аналог n_trials в Optuna)
+        max_evals=320,  # Количество испытаний (аналог n_trials в Optuna)
         timeout=10 * 3600  # Максимальное время в секундах
     )
     optimizer.optimize_with_hyperopt()

@@ -19,8 +19,8 @@ from trial import FunctionValue
 from problem import Problem
 from Globalizer_problem import GlobalizerProblem
 
-def train(model, train_loader, val_loader, epochs=10, lr=1e-3, gpu_id=0, patience=100):
-    if gpu_id != 0:
+def train(model, train_loader, val_loader, epochs=10, lr=1e-3, gpu_id=-1, patience=100):
+    if gpu_id >= 0:
         device = torch.device(f"cuda:{gpu_id}")
     else:
         device = torch.device('cpu')
@@ -104,7 +104,7 @@ class ECGClassificationProblem(Problem):
         self.number_of_objectives = 1
         self.number_of_constraints = 0
         print(dimension, ProcRank)
-        self.N_FOLDS = 10
+        self.N_FOLDS = 5
 
         self.base_path = Path("dataset/ECGClassification")
         X, y = prepare_data(self.base_path)
@@ -151,7 +151,7 @@ class ECGClassificationProblem(Problem):
         for i in range(GPU_count):
             print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
-        self.gpu_id = 0
+        self.gpu_id = -1
         if GPU_count != 0:
             self.gpu_id = ProcRank % GPU_count
             self.device = torch.device(f"cuda:{self.gpu_id}")
